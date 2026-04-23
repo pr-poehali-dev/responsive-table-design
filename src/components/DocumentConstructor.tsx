@@ -83,6 +83,7 @@ const DocumentConstructor = () => {
   const [comment, setComment] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [mobileTab, setMobileTab] = useState("settings");
 
 
   const total1day = cart.reduce((s, i) => s + i.price1day, 0);
@@ -468,31 +469,56 @@ const DocumentConstructor = () => {
       </div>
 
       {/* ══════════ МОБИЛКА ══════════ */}
-      <div className="md:hidden flex-1">
-        <div className="p-3 space-y-3">
+      <div className="md:hidden flex-1 flex flex-col">
 
-          {/* 1. Настройки */}
-          <div className="bg-white border border-gray-200 rounded p-4">
-            <ConfigForm />
-          </div>
+        {/* Табы */}
+        <div className="bg-white border-b border-gray-200 flex sticky top-0 z-10">
+          {([
+            { id: "settings", label: "Настройки" },
+            { id: "result",   label: "Результат" },
+            { id: "order",    label: "Заявка", badge: cart.length },
+            { id: "history",  label: "Заказы" },
+          ] as { id: string; label: string; badge?: number }[]).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setMobileTab(tab.id)}
+              className={`relative flex-1 py-2.5 text-[11px] font-medium transition-colors border-b-2 ${
+                mobileTab === tab.id
+                  ? "text-blue-700 border-blue-600"
+                  : "text-gray-500 border-transparent"
+              }`}
+            >
+              {tab.label}
+              {tab.badge ? (
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center">
+                  {tab.badge}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
 
-          {/* 2. Таблица результата — всегда видна */}
-          <div className="bg-white border border-gray-200 rounded p-4">
-            <ResultTable />
-          </div>
+        {/* Контент таба */}
+        <div className="flex-1 overflow-auto p-3">
 
-          {/* 3. Заявка */}
-          <div className="bg-white border border-gray-200 rounded">
-            {/* Шапка заявки */}
-            <div className="px-4 pt-4 pb-2 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-800 text-sm">Заявка</h3>
+          {mobileTab === "settings" && (
+            <div className="bg-white border border-gray-200 rounded p-4">
+              <ConfigForm />
             </div>
-            <div className="p-4">
-              {/* Таблица документов в заявке */}
+          )}
+
+          {mobileTab === "result" && (
+            <div className="bg-white border border-gray-200 rounded p-4">
+              <ResultTable />
+            </div>
+          )}
+
+          {mobileTab === "order" && (
+            <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
               {cart.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-3">Добавьте документы в заявку</p>
+                <p className="text-xs text-gray-400 text-center py-4">Добавьте документы через вкладку «Результат»</p>
               ) : (
-                <div className="overflow-x-auto mb-3">
+                <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-gray-100">
@@ -507,7 +533,7 @@ const DocumentConstructor = () => {
                       {cart.map((item, idx) => (
                         <tr key={item.id} className="border-b border-gray-50">
                           <td className="py-1.5 text-gray-500">{idx + 1}</td>
-                          <td className="py-1.5 text-gray-800 max-w-[100px] truncate">{item.doc}</td>
+                          <td className="py-1.5 text-gray-800 max-w-[90px] truncate">{item.doc}</td>
                           <td className="py-1.5 text-right text-gray-800">{fmt(item.price1day)}</td>
                           <td className="py-1.5 text-right text-gray-800">{fmt(item.price2h)}</td>
                           <td className="py-1.5 pl-1">
@@ -521,8 +547,8 @@ const DocumentConstructor = () => {
                     <tfoot>
                       <tr>
                         <td colSpan={2} className="pt-2 text-xs font-semibold text-gray-700">Итого</td>
-                        <td className="pt-2 text-right text-xs font-semibold text-gray-800">{fmt(total1day)}</td>
-                        <td className="pt-2 text-right text-xs font-semibold text-gray-800">{fmt(total2h)}</td>
+                        <td className="pt-2 text-right text-xs font-semibold">{fmt(total1day)}</td>
+                        <td className="pt-2 text-right text-xs font-semibold">{fmt(total2h)}</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -530,54 +556,37 @@ const DocumentConstructor = () => {
                 </div>
               )}
 
-              {/* Прикрепить файлы */}
-              <div className="flex items-center gap-2 py-2 border-t border-gray-100">
-                <button className="px-3 py-1.5 border border-gray-300 text-xs font-medium text-gray-700 rounded hover:bg-gray-50 transition-colors">
-                  ПРИКРЕПИТЬ
-                </button>
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                <button className="px-3 py-1.5 border border-gray-300 text-xs font-medium text-gray-700 rounded">ПРИКРЕПИТЬ</button>
                 <span className="text-xs text-gray-400">Прикрепите файлы</span>
               </div>
 
-              {/* Поля формы */}
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2">
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-1">Комментарий</p>
-                  <textarea
-                    rows={2}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-gray-400 resize-none"
-                  />
+                  <textarea rows={2} value={comment} onChange={(e) => setComment(e.target.value)}
+                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-gray-400 resize-none" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-1">Телефон</p>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-gray-400"
-                  />
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-gray-400" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-1">Эл. почта</p>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-gray-400"
-                  />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-gray-400" />
                 </div>
-                <button className="w-full py-2 border border-gray-300 text-xs font-medium text-gray-600 rounded hover:bg-gray-50 transition-colors mt-1">
+                <button className="w-full py-2 border border-gray-300 text-xs font-medium text-gray-600 rounded hover:bg-gray-50">
                   ОТПРАВИТЬ
                 </button>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* 4. Рассчитанные заявки */}
-          <div className="bg-white border border-gray-200 rounded p-4">
-            <h3 className="font-semibold text-gray-800 text-sm mb-3">Рассчитанные заявки</h3>
-            <div className="overflow-x-auto">
+          {mobileTab === "history" && (
+            <div className="bg-white border border-gray-200 rounded p-4">
+              <h3 className="font-semibold text-gray-800 text-sm mb-3">Рассчитанные заявки</h3>
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-gray-100">
@@ -593,9 +602,7 @@ const DocumentConstructor = () => {
                       <td className="py-2 text-gray-800">{o.num}</td>
                       <td className="py-2">
                         <span className={`px-1.5 py-0.5 rounded text-xs ${
-                          o.status === "calculating"
-                            ? "bg-red-100 text-red-600"
-                            : "text-gray-500"
+                          o.status === "calculating" ? "bg-red-100 text-red-600" : "text-gray-500"
                         }`}>
                           {o.status === "calculating" ? "Рассчитывается" : "Рассчитан (см.)"}
                         </span>
@@ -605,7 +612,7 @@ const DocumentConstructor = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
