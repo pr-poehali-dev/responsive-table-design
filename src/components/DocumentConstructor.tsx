@@ -83,8 +83,7 @@ const DocumentConstructor = () => {
   const [comment, setComment] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [mobileTab, setMobileTab] = useState<"form" | "order">("form");
-  const [showMobileResult, setShowMobileResult] = useState(false);
+
 
   const total1day = cart.reduce((s, i) => s + i.price1day, 0);
   const total2h = cart.reduce((s, i) => s + i.price2h, 0);
@@ -469,64 +468,145 @@ const DocumentConstructor = () => {
       </div>
 
       {/* ══════════ МОБИЛКА ══════════ */}
-      <div className="md:hidden flex-1 flex flex-col">
-        {/* Таб-переключатель */}
-        <div className="bg-white border-b border-gray-200 flex">
-          <button
-            onClick={() => setMobileTab("form")}
-            className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
-              mobileTab === "form"
-                ? "text-blue-700 border-b-2 border-blue-600"
-                : "text-gray-500"
-            }`}
-          >
-            Настройка
-          </button>
-          <button
-            onClick={() => setMobileTab("order")}
-            className={`flex-1 py-2.5 text-xs font-medium transition-colors relative ${
-              mobileTab === "order"
-                ? "text-blue-700 border-b-2 border-blue-600"
-                : "text-gray-500"
-            }`}
-          >
-            Заявка
-            {cart.length > 0 && (
-              <span className="absolute top-1.5 right-6 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
-                {cart.length}
-              </span>
-            )}
-          </button>
-        </div>
+      <div className="md:hidden flex-1">
+        <div className="p-3 space-y-3">
 
-        <div className="flex-1 overflow-auto">
-          {mobileTab === "form" && (
-            <div className="p-4 space-y-4">
-              <div className="bg-white border border-gray-200 rounded p-4">
-                <ConfigForm />
-              </div>
+          {/* 1. Настройки */}
+          <div className="bg-white border border-gray-200 rounded p-4">
+            <ConfigForm />
+          </div>
 
-              {/* Кнопка показать результат */}
-              {!showMobileResult ? (
-                <button
-                  onClick={() => setShowMobileResult(true)}
-                  className="w-full py-3 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors"
-                >
-                  Рассчитать
-                </button>
+          {/* 2. Таблица результата — всегда видна */}
+          <div className="bg-white border border-gray-200 rounded p-4">
+            <ResultTable />
+          </div>
+
+          {/* 3. Заявка */}
+          <div className="bg-white border border-gray-200 rounded">
+            {/* Шапка заявки */}
+            <div className="px-4 pt-4 pb-2 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-800 text-sm">Заявка</h3>
+            </div>
+            <div className="p-4">
+              {/* Таблица документов в заявке */}
+              {cart.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-3">Добавьте документы в заявку</p>
               ) : (
-                <div className="bg-white border border-gray-200 rounded p-4">
-                  <ResultTable />
+                <div className="overflow-x-auto mb-3">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left py-1 text-gray-500 font-medium w-6">№</th>
+                        <th className="text-left py-1 text-gray-500 font-medium">Документ</th>
+                        <th className="text-right py-1 text-gray-500 font-medium">1 день</th>
+                        <th className="text-right py-1 text-gray-500 font-medium">2 часа</th>
+                        <th className="w-5"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cart.map((item, idx) => (
+                        <tr key={item.id} className="border-b border-gray-50">
+                          <td className="py-1.5 text-gray-500">{idx + 1}</td>
+                          <td className="py-1.5 text-gray-800 max-w-[100px] truncate">{item.doc}</td>
+                          <td className="py-1.5 text-right text-gray-800">{fmt(item.price1day)}</td>
+                          <td className="py-1.5 text-right text-gray-800">{fmt(item.price2h)}</td>
+                          <td className="py-1.5 pl-1">
+                            <button onClick={() => removeCartItem(item.id)} className="text-gray-300 hover:text-gray-600">
+                              <Icon name="X" size={12} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={2} className="pt-2 text-xs font-semibold text-gray-700">Итого</td>
+                        <td className="pt-2 text-right text-xs font-semibold text-gray-800">{fmt(total1day)}</td>
+                        <td className="pt-2 text-right text-xs font-semibold text-gray-800">{fmt(total2h)}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               )}
-            </div>
-          )}
 
-          {mobileTab === "order" && (
-            <div className="p-4">
-              <OrderPanel />
+              {/* Прикрепить файлы */}
+              <div className="flex items-center gap-2 py-2 border-t border-gray-100">
+                <button className="px-3 py-1.5 border border-gray-300 text-xs font-medium text-gray-700 rounded hover:bg-gray-50 transition-colors">
+                  ПРИКРЕПИТЬ
+                </button>
+                <span className="text-xs text-gray-400">Прикрепите файлы</span>
+              </div>
+
+              {/* Поля формы */}
+              <div className="space-y-2 mt-2">
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">Комментарий</p>
+                  <textarea
+                    rows={2}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-gray-400 resize-none"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">Телефон</p>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-gray-400"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">Эл. почта</p>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-gray-400"
+                  />
+                </div>
+                <button className="w-full py-2 border border-gray-300 text-xs font-medium text-gray-600 rounded hover:bg-gray-50 transition-colors mt-1">
+                  ОТПРАВИТЬ
+                </button>
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* 4. Рассчитанные заявки */}
+          <div className="bg-white border border-gray-200 rounded p-4">
+            <h3 className="font-semibold text-gray-800 text-sm mb-3">Рассчитанные заявки</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left py-1 text-gray-500 font-medium pb-2">Дата</th>
+                    <th className="text-left py-1 text-gray-500 font-medium pb-2">№</th>
+                    <th className="text-left py-1 text-gray-500 font-medium pb-2">Статус</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CALC_ORDERS.map((o) => (
+                    <tr key={o.num} className="border-b border-gray-50">
+                      <td className="py-2 text-gray-500">{o.date}</td>
+                      <td className="py-2 text-gray-800">{o.num}</td>
+                      <td className="py-2">
+                        <span className={`px-1.5 py-0.5 rounded text-xs ${
+                          o.status === "calculating"
+                            ? "bg-red-100 text-red-600"
+                            : "text-gray-500"
+                        }`}>
+                          {o.status === "calculating" ? "Рассчитывается" : "Рассчитан (см.)"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
